@@ -89,77 +89,518 @@ cDNA 是以 RNA 为模板，通过：
 
 ---
 
-## 4. Cell barcode
+## 4. Cell barcode、Bead 与 mRNA 捕获
 
-它回答的问题是：
+### 4.1 Bead｜微珠
 
-> 这条 RNA 来自哪个 cell？
-
-例如：
+在 10x Genomics 的 droplet-based scRNA-seq 中，一个 droplet（液滴）理想情况下包含：
 
 ```text
-Cell A → barcode AAA...
-Cell B → barcode CCC...
+1 个 cell
++
+1 颗 bead
 ```
 
-同一个细胞中的 RNA molecule 会被赋予相同的 cell barcode。
+`bead` 中文一般叫：
 
-不要和 **sample index，样本索引**混淆。
+> **微珠**
+
+10x 中常见的是 **gel bead，凝胶微珠**。
+
+bead 表面带有大量用于捕获 mRNA 的 **oligonucleotide（寡核苷酸）**。
+
+可以把一条捕获序列简化理解为：
 
 ```text
-Sample index
-→ 区分不同样本
-
-Cell barcode
-→ 区分同一个样本里的不同细胞
+[ Cell Barcode ][ UMI ][ poly(dT) ]
+       ↓           ↓        ↓
+   区分细胞      区分分子    捕获 mRNA
 ```
+
+注意：
+
+> Cell Barcode、UMI 和 poly(dT) 不是三颗不同的东西，而是同一条 oligonucleotide 上具有不同功能的序列区域。
 
 ---
 
-## 5. UMI
+### 4.2 poly(dT)｜如何捕获 mRNA
 
-**UMI = Unique Molecular Identifier，唯一分子标识符**
+真核生物成熟 mRNA 的 3' 端通常具有：
 
-它回答的问题是：
-
-> 这是这个细胞里的哪个原始 RNA molecule？
+> **poly(A) tail，多聚腺苷酸尾**
 
 例如：
 
 ```text
-Cell A + CD3D + UMI U1
-Cell A + CD3D + UMI U1
-Cell A + CD3D + UMI U2
+mRNA ─────────────────AAAAAAA
+                      ↑
+                   poly(A)
 ```
 
-虽然一共有 3 条 reads，但不同的 UMI 只有：
+而 bead 上的捕获序列带有：
+
+> **poly(dT)**
+
+也就是一串 T：
 
 ```text
-U1
-U2
+TTTTTTTTTTTT
 ```
 
-所以真正代表的原始 RNA molecule 数量更接近：
+因为：
 
 ```text
-2
+A ↔ T
+```
+
+可以互补配对，所以 poly(dT) 可以与 mRNA 的 poly(A) tail 结合：
+
+```text
+mRNA:        ─────────AAAAAAA
+                       |||||||
+bead oligo:            TTTTTTT──────── bead
 ```
 
 因此：
 
+> **poly(dT) 的作用是把 mRNA 捕获到 bead 上。**
+
+---
+
+### 4.3 Cell Barcode｜这条 RNA 来自哪个 cell？
+
+`barcode` 中文是：
+
+> **条形码**
+
+但这里不是传统的黑白条形码，而是一段特定的 DNA sequence。
+
+假设某一颗 bead 的 Cell Barcode 是：
+
 ```text
-Cell A 的 CD3D count = 2
+ACGTTGCA
 ```
 
-为什么要这样做？
+这颗 bead 上大量捕获序列的 **Cell Barcode 部分都是相同的**：
 
-因为一个原始 cDNA molecule ，经过PCR 之后可能被扩增成很多 copies。
+```text
+oligo 1: ACGTTGCA ...
+oligo 2: ACGTTGCA ...
+oligo 3: ACGTTGCA ...
+```
 
-如果直接数 reads，就可能把 PCR 复制产生的重复 reads 当成多个原始 RNA molecule。
+如果这颗 bead 和 Cell A 被包进同一个 droplet：
 
-UMI 可以帮助进行：
+```text
+droplet A
 
-**UMI deduplication，UMI 去重**
+┌──────────────────┐
+│                  │
+│      Cell A      │
+│                  │
+│       ● bead A   │
+│                  │
+└──────────────────┘
+```
+
+Cell A 释放的不同 mRNA 被 bead 捕获以后，都会带上相同的 Cell Barcode。
+
+例如：
+
+```text
+CD3D mRNA  → ACGTTGCA
+CD3E mRNA  → ACGTTGCA
+IL7R mRNA  → ACGTTGCA
+```
+
+测序时，大量来自不同细胞的分子会混在一起。
+
+但看到相同的：
+
+```text
+ACGTTGCA
+```
+
+就可以知道：
+
+> 这些 RNA 来自同一个 droplet，也就是同一个候选 cell。
+
+因此 Cell Barcode 回答的是：
+
+```text
+Which cell?
+↓
+这条 RNA 来自哪个 cell？
+```
+
+可以记成：
+
+```text
+Cell Barcode
+↓
+区分 cell
+```
+
+---
+
+### 4.4 Droplet 和 Cell Barcode 的关系
+
+`droplet`：
+
+> **液滴**
+
+`Cell Barcode`：
+
+> **用于标记液滴中 RNA 来源的 DNA 序列标签**
+
+因此不能理解成：
+
+> “一个 barcode 里面有一个 droplet”。
+
+物理过程实际上是：
+
+```text
+droplet
+↓
+里面有 cell + bead
+↓
+bead 带有特定 Cell Barcode
+↓
+droplet 中被捕获的 RNA 获得这个 Cell Barcode
+↓
+测序后通过 barcode 把 RNA 分回不同 droplet
+```
+
+因此在理想情况下：
+
+```text
+一个 droplet
+≈
+一个 Cell Barcode
+≈
+一个 cell
+```
+
+但现实中这个等号并不总成立。
+
+例如：
+
+```text
+droplet 中没有 cell
+→ empty droplet
+
+droplet 中有两个 cell
+→ doublet
+```
+
+因此 count matrix 中的一个 barcode：
+
+> 不一定真的代表一个高质量的单细胞。
+
+---
+
+## 5. UMI｜Unique Molecular Identifier
+
+**UMI = Unique Molecular Identifier，唯一分子标识符**
+
+它回答的问题不是：
+
+> 这条 RNA 来自哪个 cell？
+
+这个问题由 Cell Barcode 回答。
+
+UMI 回答的是：
+
+> **这是哪个原始 RNA molecule？**
+
+可以记成：
+
+```text
+Cell Barcode
+↓
+区分 cell
+
+UMI
+↓
+区分原始 RNA molecule
+```
+
+---
+
+### 5.1 为什么需要 UMI？
+
+假设 Cell A 中原来只有两个 `CD3D` mRNA：
+
+```text
+CD3D molecule 1
+CD3D molecule 2
+```
+
+但是建库过程中需要进行 PCR amplification。
+
+于是：
+
+```text
+molecule 1
+↓ PCR
+1 1 1 1 1 1
+
+molecule 2
+↓ PCR
+2 2 2 2
+```
+
+最后可能测到：
+
+```text
+10 条 CD3D reads
+```
+
+但不能因此说：
+
+```text
+Cell A 中有 10 个 CD3D RNA molecules
+```
+
+因为很多 reads 只是同一个原始 molecule 的 PCR copies。
+
+---
+
+### 5.2 UMI 如何解决 PCR duplicate 问题？
+
+不同的原始 RNA molecule 在捕获时会获得不同的 UMI。
+
+例如：
+
+```text
+CD3D molecule 1
+
+Cell Barcode = AAAA
+UMI = CGTA
+```
+
+另一个：
+
+```text
+CD3D molecule 2
+
+Cell Barcode = AAAA
+UMI = TTGC
+```
+
+PCR amplification 后可能得到：
+
+```text
+AAAA + CGTA
+AAAA + CGTA
+AAAA + CGTA
+AAAA + CGTA
+
+AAAA + TTGC
+AAAA + TTGC
+```
+
+虽然这里有：
+
+```text
+6 reads
+```
+
+但只有两个不同的 UMI：
+
+```text
+CGTA
+TTGC
+```
+
+因此它们更接近代表：
+
+```text
+2 个原始 RNA molecules
+```
+
+所以最终：
+
+```text
+Cell A 的 CD3D count ≈ 2
+```
+
+而不是：
+
+```text
+CD3D count = 6
+```
+
+这个过程叫：
+
+> **UMI deduplication，UMI 去重**
+
+---
+
+### 5.3 UMI 不需要在整个实验中全局唯一
+
+不同 cell 中可能碰巧出现相同的 UMI。
+
+例如：
+
+```text
+Cell A
+Gene CD3D
+UMI = ACTG
+```
+
+另一个：
+
+```text
+Cell B
+Gene MS4A1
+UMI = ACTG
+```
+
+这并没有问题。
+
+实际判断原始 molecule 时，需要结合：
+
+```text
+Cell Barcode
++
+UMI
++
+Gene
+```
+
+一起考虑。
+
+---
+
+### 5.4 Cell Barcode、UMI 和 Gene identity 如何一起构建 count matrix？
+
+整个过程可以简化成：
+
+```text
+mRNA
+ │
+ │ 3' 端具有 poly(A)
+ ↓
+bead 上的 poly(dT) 捕获 mRNA
+ │
+ ↓
+这条分子获得：
+ │
+ ├── Cell Barcode
+ │      ↓
+ │   来自哪个 cell？
+ │
+ └── UMI
+        ↓
+     是哪个原始 RNA molecule？
+```
+
+测序之后还需要利用 cDNA sequence：
+
+```text
+cDNA sequence
+↓
+mapping
+↓
+gene assignment
+↓
+来自哪个 gene？
+```
+
+因此最终需要三类信息：
+
+```text
+Cell Barcode
+↓
+Which cell?
+
+UMI
+↓
+Which original RNA molecule?
+
+cDNA / R2 sequence
+↓
+Which gene?
+```
+
+最后才能统计：
+
+```text
+             Gene A   Gene B   Gene C
+
+Cell A          10       3        0
+Cell B           2      15        4
+Cell C           0       1       20
+```
+
+也就是后续分析使用的：
+
+> **cell × gene count matrix**
+
+---
+
+### 5.5 为什么 ambient RNA 也会获得 Cell Barcode？
+
+bead 并不知道一条 RNA 是：
+
+```text
+这个 cell 自己产生的 RNA
+```
+
+还是：
+
+```text
+环境里游离的 ambient RNA
+```
+
+只要一条 ambient RNA 恰好进入某个 droplet，并被这个 droplet 中的 bead 捕获：
+
+```text
+ambient RNA
+↓
+被 bead 捕获
+↓
+也获得这个 bead 的 Cell Barcode
+```
+
+那么测序后，它最开始也会被认为属于这个 cell。
+
+例如：
+
+```text
+droplet A
+│
+├── T cell
+├── bead A
+└── 外面飘进来的 HBB RNA
+```
+
+那么：
+
+```text
+T cell 自己的 CD3D RNA
+↓
+Cell Barcode A
+
+ambient HBB RNA
+↓
+也得到 Cell Barcode A
+```
+
+最后可能得到：
+
+```text
+T cell
+
+CD3D = 20
+CD3E = 15
+HBB  = 5
+```
+
+其中 `HBB = 5` 可能并不是这个 T cell 的真实表达，而是 ambient RNA contamination。
+
+这也是后续需要进行 ambient RNA correction 的原因。
 
 ---
 
