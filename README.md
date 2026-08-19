@@ -113,7 +113,7 @@ scrna-from-fastq/
 - [x] Ambient RNA correction
 - [x] Doublet detection
 - [x] QC filtering
-- [x] Normalization
+- [ ] Normalization
 - [ ] Dimensionality reduction
 - [ ] Clustering
 - [ ] Cell type annotation
