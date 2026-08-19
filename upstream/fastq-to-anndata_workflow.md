@@ -653,3 +653,4 @@ adata.var
 因此可以把整个上游浓缩成一句：
 
 > **Raw FASTQ → reference construction → read mapping → barcode processing/correction → UMI quantification → sparse count matrix → AnnData → gene metadata annotation。**
+

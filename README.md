@@ -37,32 +37,52 @@ alevin-fry
 pyroe
 ```
 
-下游主要使用：
+下游分析主要使用：
 
 ```text
-AnnData
-+
-Scanpy
+SoupX / scDblFinder
+↓
+AnnData / Scanpy
 ```
 
+其中 SoupX 用于 ambient RNA correction，scDblFinder 用于 doublet detection，Scanpy 用于后续 QC、normalization、降维、聚类和细胞类型注释等分析。
+
 整体流程：
+
+## 整体流程
 
 ```text
 10x FASTQ
 ↓
+Genome FASTA + GENCODE GTF
+↓
 splici reference
 ↓
-piscem mapping
+piscem index
 ↓
-alevin-fry quantification
+piscem map-sc
+↓
+RAD
+↓
+alevin-fry
 ↓
 Gene × Cell count matrix
 ↓
+pyroe.load_fry()
+↓
 AnnData
 ↓
-Quality Control
+基础 QC metrics
+↓
+SoupX ambient RNA correction
+↓
+scDblFinder doublet detection
+↓
+QC filtering
 ↓
 Normalization
+↓
+Feature selection
 ↓
 Dimensionality reduction
 ↓
