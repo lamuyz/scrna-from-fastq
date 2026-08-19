@@ -47,8 +47,6 @@ AnnData / Scanpy
 
 其中 SoupX 用于 ambient RNA correction，scDblFinder 用于 doublet detection，Scanpy 用于后续 QC、normalization、降维、聚类和细胞类型注释等分析。
 
-整体流程：
-
 ## 整体流程
 
 ```text
@@ -95,16 +93,20 @@ Cell type annotation
 
 ```text
 scrna-from-fastq/
+├── README.md
 ├── need2know.md
 ├── upstream/
 │   └── fastq-to-anndata_workflow.md
 └── downstream/
-    └── QC_workflow.md
+    ├── QC_workflow.md
+    └── Normalization_workflow.md
+    
 ```
 
-- [`upstream/fastq-to-anndata_workflow.md`](upstream/fastq-to-anndata_workflow.md)：FASTQ 到 AnnData 的上游流程
-- [`downstream/QC_workflow.md`](downstream/QC_workflow.md)：QC 及下游分析记录
-- [`need2know.md`](need2know.md)：学习过程中整理的关键概念
+- [`upstream/fastq-to-anndata_workflow.md`](https://chatgpt.com/g/g-p-6a73f8f16dd08191a3bae132d298b45a-keep-learning/c/upstream/fastq-to-anndata_workflow.md)：FASTQ 到 AnnData 的上游流程
+- [`downstream/QC_workflow.md`](https://chatgpt.com/g/g-p-6a73f8f16dd08191a3bae132d298b45a-keep-learning/c/downstream/QC_workflow.md)：QC 及下游分析记录
+- [`downstream/Normalization_workflow.md`](https://chatgpt.com/g/g-p-6a73f8f16dd08191a3bae132d298b45a-keep-learning/c/downstream/Normalization_workflow.md)：normalization 学习记录，目前主要记录经典 shifted logarithm 流程
+- [`need2know.md`](https://chatgpt.com/g/g-p-6a73f8f16dd08191a3bae132d298b45a-keep-learning/c/need2know.md)：学习过程中整理的关键概念
 
 ## 当前进度
 
