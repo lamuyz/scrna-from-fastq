@@ -1,4 +1,4 @@
-# Normalization_workflow
+# normalization
 
 > 当前仅记录经典的 **Shifted logarithm（移位对数归一化）流程。Scran normalization 和 analytic Pearson residuals 暂不展开。
 
