@@ -174,6 +174,6 @@ Cell type annotation
 - [x] Feature selection
 - [x] Dimensionality reduction
 - [x] Clustering
-- [ ] Cell type annotation
+- [x] Cell type annotation
 
 持续更新中。
